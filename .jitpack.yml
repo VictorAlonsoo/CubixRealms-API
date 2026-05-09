@@ -1,2 +1,3 @@
 jdk:
   - openjdk21
+build: mvn clean install -DskipTests
