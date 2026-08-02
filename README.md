@@ -191,6 +191,4 @@ if (denial.isEmpty()) {
 ## Versioning
 
 This module's versioning is independent from the main plugin
-(`cubixrealms-api/pom.xml`, not the repo root) and follows SemVer. Public
-surface changes (added/changed/removed methods, events, fields) are
-documented in [`CHANGES.md`](./CHANGES.md).
+(`cubixrealms-api/pom.xml`, not the repo root) and follows SemVer.
