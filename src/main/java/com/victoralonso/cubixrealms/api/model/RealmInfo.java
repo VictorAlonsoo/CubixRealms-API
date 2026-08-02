@@ -9,6 +9,7 @@ import java.util.UUID;
  * @param ownerName       last known display name of the owner
  * @param worldName       overworld world name on the server
  * @param netherWorldName nether world name on the server
+ * @param endWorldName    end world name on the server
  * @param visitorRule     name of the visitor access rule (EVERYONE, MEMBERS_ONLY, FRIENDS_ONLY, PRIVATE)
  * @param loaded          whether the realm worlds are currently loaded in memory
  */
@@ -17,6 +18,7 @@ public record RealmInfo(
         String ownerName,
         String worldName,
         String netherWorldName,
+        String endWorldName,
         String visitorRule,
         boolean loaded
 ) {}
