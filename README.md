@@ -1,36 +1,35 @@
 # CubixRealms API
 
-API pública en Java para que otros plugins de Paper se integren con
-**CubixRealms** — mundos privados propiedad del jugador (Overworld, Nether y
-End), roles, teleportes seguros y portales aislados por realm.
+Public Java API for other Paper plugins to integrate with **CubixRealms** —
+player-owned private worlds (Overworld, Nether and End), roles, safe
+teleportation and per-realm isolated portal routing.
 
-## Dónde conseguir CubixRealms
+## Where to get CubixRealms
 
 - **BuiltByBit:** https://builtbybit.com/resources/cubix-realms.108449/
-- **Discord (soporte):** https://discord.gg/ueHSMWU4KA
+- **Discord (support):** https://discord.gg/ueHSMWU4KA
 
-## ¿Para quién es esta API?
+## Who is this API for?
 
-Para desarrolladores de plugins/addons que quieran, sin tocar el almacenamiento
-interno de CubixRealms:
+For plugin/addon developers who want to, without touching CubixRealms'
+internal storage:
 
-- Leer datos públicos de un realm (dueño, nombres de mundo, si está cargado,
-  regla de visitas).
-- Consultar el rol de un jugador dentro de un realm y si está baneado.
-- Comprobar si un visitante puede entrar a un realm y obtener el mensaje de
-  denegación oficial (ya traducido, con el prefijo de CubixRealms).
-- Cargar un realm bajo demanda si sus mundos no están en memoria.
-- Reaccionar a eventos del ciclo de vida de un realm: creación, borrado,
-  carga/descarga, entrada/salida, teletransporte, viaje entre dimensiones,
-  cambio de rol, ban/unban, reset de dimensión y cambio de spawn.
+- Read public data about a realm (owner, world names, whether it's loaded,
+  visitor rule).
+- Look up a player's role inside a realm and whether they're banned.
+- Check whether a visitor is allowed into a realm and get the official
+  denial message (already translated, with the CubixRealms prefix).
+- Load a realm on demand if its worlds aren't in memory.
+- React to a realm's lifecycle events: creation, deletion, load/unload,
+  enter/leave, teleport, travel between dimensions, role change, ban/unban,
+  dimension reset and spawn change.
 
-Esta API **no** sirve para modificar la configuración del plugin ni para
-acceder a datos internos de almacenamiento — es una fachada de solo lectura
-más eventos.
+This API is **not** for modifying the plugin's configuration or accessing
+internal storage data — it's a read-only facade plus events.
 
-## Instalación (Maven)
+## Installation (Maven)
 
-CubixRealms solo se distribuye vía Maven a través de JitPack:
+CubixRealms is only distributed via Maven through JitPack:
 
 ```xml
 <repositories>
@@ -51,31 +50,31 @@ CubixRealms solo se distribuye vía Maven a través de JitPack:
 </dependencies>
 ```
 
-`scope=provided` porque el JAR de la API ya viene incluido dentro del plugin
-CubixRealms en el servidor — tu addon solo necesita las clases en tiempo de
-compilación. Declara CubixRealms como dependencia blanda en tu
-`paper-plugin.yml` / `plugin.yml`:
+`scope=provided` because the API JAR already ships inside the CubixRealms
+plugin on the server — your addon only needs the classes at compile time.
+Declare CubixRealms as a soft dependency in your `paper-plugin.yml` /
+`plugin.yml`:
 
 ```yml
 softdepend: [CubixRealms]
 ```
 
-## Uso básico
+## Basic usage
 
-La instancia es `null` antes de que CubixRealms se habilite y después de que
-se deshabilite — compruébalo siempre:
+The instance is `null` before CubixRealms enables and after it disables —
+always check it:
 
 ```java
 CubixRealmsAPI api = CubixRealmsAPI.get();
 if (api != null) {
     Optional<RealmInfo> realm = api.getRealmInfo(ownerUuid);
     realm.ifPresent(info -> {
-        player.sendMessage("Realm de " + info.ownerName() + " — cargado: " + info.loaded());
+        player.sendMessage("Realm owned by " + info.ownerName() + " — loaded: " + info.loaded());
     });
 }
 ```
 
-Comprobar acceso antes de dejar visitar un realm:
+Check access before letting someone visit a realm:
 
 ```java
 Optional<VisitDenialReason> denial = api.checkVisit(ownerUuid, visitor);
@@ -85,109 +84,113 @@ if (denial.isPresent()) {
 }
 ```
 
-## Ejemplos
+## Examples
 
-Registra tu listener normalmente, con CubixRealms como `softdepend`. Todos
-los eventos se disparan en el hilo principal.
+Register your listener normally, with CubixRealms as a `softdepend`. All
+events fire on the main thread.
 
-### Creación de un realm
+### Realm creation
 
 ```java
 @EventHandler
 public void onRealmCreate(RealmCreateEvent event) {
-    Bukkit.getLogger().info(event.getOwnerName() + " ha creado un realm.");
-    // event.setCancelled(true); // evento cancelable
+    Bukkit.getLogger().info(event.getOwnerName() + " created a realm.");
+    // event.setCancelled(true); // cancellable event
 }
 ```
 
-### Cambio de dimensión (entrada a Overworld/Nether/End)
+### Dimension change (entering Overworld/Nether/End)
 
 ```java
 @EventHandler
 public void onRealmEnter(RealmEnterEvent event) {
     if (event.getDimension() == RealmDimension.END) {
-        event.getPlayer().sendMessage("Has entrado al End de este realm.");
+        event.getPlayer().sendMessage("You entered this realm's End.");
     }
 }
 ```
 
-### Viaje por portal entre dimensiones del mismo realm
+### Portal travel between dimensions of the same realm
 
 ```java
 @EventHandler
 public void onPortalTravel(RealmPortalTravelEvent event) {
     if (event.getFrom() == RealmDimension.OVERWORLD && event.getTo() == RealmDimension.NETHER) {
-        event.getPlayer().sendMessage("Cruzando al Nether de tu realm...");
+        event.getPlayer().sendMessage("Crossing into your realm's Nether...");
     }
-    // event.setCancelled(true); // evento cancelable
+    // event.setCancelled(true); // cancellable event
 }
 ```
 
-### Teletransporte al realm de otro jugador
+### Teleporting to another player's realm
 
 ```java
 @EventHandler
 public void onRealmTeleport(RealmTeleportEvent event) {
     Optional<RealmInfo> target = api.getRealmInfo(event.getTargetOwnerUuid());
     target.ifPresent(info ->
-        event.getPlayer().sendMessage("Viajando al realm de " + info.ownerName() + "..."));
-    // event.setCancelled(true); // evento cancelable
+        event.getPlayer().sendMessage("Traveling to " + info.ownerName() + "'s realm..."));
+    // event.setCancelled(true); // cancellable event
 }
 ```
 
-### Comprobación de visita manual (fuera de un evento)
+### Manual visit check (outside an event)
 
 ```java
 Optional<VisitDenialReason> denial = api.checkVisit(ownerUuid, visitor);
 if (denial.isEmpty()) {
-    // el visitante puede entrar
+    // the visitor is allowed in
 }
 ```
 
-## Referencia rápida
+## Quick reference
 
 ### `CubixRealmsAPI`
 
+| Method | Description |
+|---|---|
+| `getRealmInfo(UUID ownerUuid)` | Public realm data by owner. |
+| `getRealmByWorldName(String worldName)` | Public realm data by world name, without requiring it to be loaded. |
+| `getRealmOwner(World world)` / `getRealmOwner(String worldName)` | Owner of the realm a world belongs to. |
+| `isRealmWorld(World world)` / `isRealmWorld(String worldName)` | Whether a world belongs to any realm. |
+| `isLoaded(UUID ownerUuid)` | Whether the realm's overworld is currently loaded in memory. |
+| `getRoleName(UUID playerUuid, UUID ownerUuid)` | The player's role inside the realm (`OWNER`, `VISITOR`, or a custom role). |
+| `isBanned(UUID playerUuid, UUID ownerUuid)` | Whether the player is banned from the realm. |
+| `getMembers(UUID ownerUuid)` | List of explicit (non-visitor) members of the realm. |
+| `checkVisit(UUID ownerUuid, Player visitor)` | Runs the full access pipeline (bypass, ban, visitor rule, offline owner) and returns the denial reason if any. |
+| `getVisitDenialMessage(VisitDenialReason reason, UUID ownerUuid)` | Official, already-translated denial message. |
+| `loadRealmAsync(UUID ownerUuid)` | Loads the realm's worlds if not already loaded; resolves on the main thread. |
 
-| Método                                                           | Descripción                                                                                                                     |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `getRealmInfo(UUID ownerUuid)`                                    | Datos públicos del realm por dueño.                                                                                            |
-| `getRealmByWorldName(String worldName)`                           | Datos públicos del realm por nombre de mundo, sin necesidad de que esté cargado.                                               |
-| `getRealmOwner(World world)` / `getRealmOwner(String worldName)`  | Dueño del realm al que pertenece un mundo.                                                                                      |
-| `isRealmWorld(World world)` / `isRealmWorld(String worldName)`    | Si un mundo pertenece a algún realm.                                                                                            |
-| `isLoaded(UUID ownerUuid)`                                        | Si el overworld del realm está cargado en memoria.                                                                              |
-| `getRoleName(UUID playerUuid, UUID ownerUuid)`                    | Rol del jugador dentro del realm (`OWNER`, `VISITOR`, o rol personalizado).                                                      |
-| `isBanned(UUID playerUuid, UUID ownerUuid)`                       | Si el jugador está baneado del realm.                                                                                           |
-| `getMembers(UUID ownerUuid)`                                      | Lista de miembros explícitos (no visitantes) del realm.                                                                         |
-| `checkVisit(UUID ownerUuid, Player visitor)`                      | Aplica todo el pipeline de acceso (bypass, ban, regla de visitas, dueño offline) y devuelve el motivo de denegación si lo hay. |
-| `getVisitDenialMessage(VisitDenialReason reason, UUID ownerUuid)` | Mensaje oficial de denegación, ya traducido.                                                                                    |
-| `loadRealmAsync(UUID ownerUuid)`                                  | Carga los mundos del realm si no están cargados; se resuelve en el hilo principal.                                              |
+### Models
 
-### Modelos
+| Class | Description |
+|---|---|
+| `RealmInfo` | Immutable realm snapshot: owner, name, worlds (overworld/nether/end), visitor rule, whether it's loaded. |
+| `RealmMemberInfo` | Snapshot of a member: UUID, role, join date. |
+| `RealmDimension` | `OVERWORLD`, `NETHER`, `END`. |
+| `VisitDenialReason` | `REALM_NOT_FOUND`, `BANNED`, `MEMBERS_ONLY`, `FRIENDS_ONLY`, `PRIVATE`, `OWNER_OFFLINE`. |
 
+### Events (`org.bukkit.event.Event`, package `api.event`)
 
-| Clase               | Descripción                                                                                                     |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `RealmInfo`         | Snapshot inmutable del realm: dueño, nombre, mundos (overworld/nether/end), regla de visitas, si está cargado. |
-| `RealmMemberInfo`   | Snapshot de un miembro: UUID, rol, fecha de ingreso.                                                             |
-| `RealmDimension`    | `OVERWORLD`, `NETHER`, `END`.                                                                                    |
-| `VisitDenialReason` | `REALM_NOT_FOUND`, `BANNED`, `MEMBERS_ONLY`, `FRIENDS_ONLY`, `PRIVATE`, `OWNER_OFFLINE`.                         |
+| Event | Cancellable | Fires when... |
+|---|---|---|
+| `RealmCreateEvent` | Yes | A new realm is created. |
+| `RealmDeleteEvent` | Yes | A realm is deleted. |
+| `RealmLoadEvent` | No | A realm's worlds are loaded into memory. |
+| `RealmUnloadEvent` | No | A realm's worlds are unloaded. |
+| `RealmEnterEvent` | No | A player enters a realm dimension. |
+| `RealmLeaveEvent` | No | A player leaves a realm dimension. |
+| `RealmTeleportEvent` | Yes | A player teleports to another player's realm. |
+| `RealmPortalTravelEvent` | Yes | A player travels between dimensions of the same realm via a portal. |
+| `RealmResetDimensionEvent` | Yes | A realm dimension is reset. |
+| `RealmRoleChangeEvent` | Yes | A member's role changes. |
+| `RealmBanEvent` | Yes | A player is banned from the realm. |
+| `RealmUnbanEvent` | No | A player is unbanned. |
+| `RealmSpawnSetEvent` | No | The owner sets their realm's spawn. |
 
-### Eventos (`org.bukkit.event.Event`, paquete `api.event`)
+## Versioning
 
-
-| Evento                     | Cancelable | Se dispara cuando...                                            |
-| -------------------------- | ---------- | --------------------------------------------------------------- |
-| `RealmCreateEvent`         | Sí        | Se crea un nuevo realm.                                         |
-| `RealmDeleteEvent`         | Sí        | Se borra un realm.                                              |
-| `RealmLoadEvent`           | No         | Los mundos de un realm se cargan en memoria.                    |
-| `RealmUnloadEvent`         | No         | Los mundos de un realm se descargan.                            |
-| `RealmEnterEvent`          | No         | Un jugador entra a una dimensión de un realm.                  |
-| `RealmLeaveEvent`          | No         | Un jugador sale de una dimensión de un realm.                  |
-| `RealmTeleportEvent`       | Sí        | Un jugador se teletransporta al realm de otro jugador.          |
-| `RealmPortalTravelEvent`   | Sí        | Un jugador viaja entre dimensiones del mismo realm vía portal. |
-| `RealmResetDimensionEvent` | Sí        | Se resetea una dimensión del realm.                            |
-| `RealmRoleChangeEvent`     | Sí        | Cambia el rol de un miembro.                                    |
-| `RealmBanEvent`            | Sí        | Se banea a un jugador del realm.                                |
-| `RealmUnbanEvent`          | No         | Se le quita el ban a un jugador.                                |
-| `RealmSpawnSetEvent`       | No         | El dueño fija el spawn de su realm.                            |
+This module's versioning is independent from the main plugin
+(`cubixrealms-api/pom.xml`, not the repo root) and follows SemVer. Public
+surface changes (added/changed/removed methods, events, fields) are
+documented in [`CHANGES.md`](./CHANGES.md).
