@@ -1,0 +1,11 @@
+# JitPack build settings (https://docs.jitpack.io/building/).
+#
+# JitPack's default Maven is older than 3.6.3, which maven-compiler-plugin 3.13.0
+# requires, so every build failed with "requires Maven version 3.6.3". The build runs
+# through the Maven Wrapper in this repository (mvnw + .mvn/wrapper), which downloads
+# the Maven version pinned in .mvn/wrapper/maven-wrapper.properties.
+jdk:
+  - openjdk21
+install:
+  - bash ./mvnw -B -v
+  - bash ./mvnw -B clean install -DskipTests

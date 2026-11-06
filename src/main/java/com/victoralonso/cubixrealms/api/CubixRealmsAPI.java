@@ -61,7 +61,7 @@ public interface CubixRealmsAPI {
     Optional<UUID> getRealmOwner(String worldName);
 
     /**
-     * Returns true if the given world belongs to any realm (overworld or nether).
+     * Returns true if the given world belongs to any realm (overworld, nether or end).
      */
     boolean isRealmWorld(World world);
 

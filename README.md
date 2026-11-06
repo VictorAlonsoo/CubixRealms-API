@@ -27,9 +27,14 @@ internal storage:
 This API is **not** for modifying the plugin's configuration or accessing
 internal storage data — it's a read-only facade plus events.
 
-## Installation (Maven)
+## Installation
 
-CubixRealms is only distributed via Maven through JitPack:
+The API is published through [JitPack](https://jitpack.io/#VictorAlonsoo/CubixRealms-API)
+from its own repository, [VictorAlonsoo/CubixRealms-API](https://github.com/VictorAlonsoo/CubixRealms-API).
+The version is a Git tag of that repository; each release of the API is listed in
+[`CHANGES.md`](./CHANGES.md).
+
+### Maven
 
 ```xml
 <repositories>
@@ -41,19 +46,46 @@ CubixRealms is only distributed via Maven through JitPack:
 
 <dependencies>
     <dependency>
-        <groupId>com.victoralonso</groupId>
-        <artifactId>cubixrealms-api</artifactId>
-        <version>2.0.0</version>
+        <groupId>com.github.VictorAlonsoo</groupId>
+        <artifactId>CubixRealms-API</artifactId>
+        <version>2.2.0</version>
         <scope>provided</scope>
-        <optional>true</optional>
     </dependency>
 </dependencies>
 ```
 
-`scope=provided` because the API JAR already ships inside the CubixRealms
-plugin on the server — your addon only needs the classes at compile time.
-Declare CubixRealms as a soft dependency in your `paper-plugin.yml` /
-`plugin.yml`:
+### Gradle (Kotlin DSL)
+
+```kotlin
+repositories {
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    compileOnly("com.github.VictorAlonsoo:CubixRealms-API:2.2.0")
+}
+```
+
+Use `provided` / `compileOnly`: the API classes already ship inside the CubixRealms
+plugin on the server, so your addon only needs them at compile time. Never shade them.
+
+The API is compiled against Paper 1.21.11 and only uses Bukkit/Adventure types that
+exist on every version CubixRealms supports (1.21.6+ and 26.x).
+
+### Declare the dependency
+
+`paper-plugin.yml`:
+
+```yml
+dependencies:
+  server:
+    CubixRealms:
+      load: BEFORE
+      required: false
+      join-classpath: true
+```
+
+`plugin.yml` (Bukkit-style plugins):
 
 ```yml
 softdepend: [CubixRealms]
@@ -127,6 +159,8 @@ public void onPortalTravel(RealmPortalTravelEvent event) {
 ```java
 @EventHandler
 public void onRealmTeleport(RealmTeleportEvent event) {
+    CubixRealmsAPI api = CubixRealmsAPI.get();
+    if (api == null) return;
     Optional<RealmInfo> target = api.getRealmInfo(event.getTargetOwnerUuid());
     target.ifPresent(info ->
         event.getPlayer().sendMessage("Traveling to " + info.ownerName() + "'s realm..."));
@@ -137,6 +171,7 @@ public void onRealmTeleport(RealmTeleportEvent event) {
 ### Manual visit check (outside an event)
 
 ```java
+CubixRealmsAPI api = CubixRealmsAPI.get();
 Optional<VisitDenialReason> denial = api.checkVisit(ownerUuid, visitor);
 if (denial.isEmpty()) {
     // the visitor is allowed in
@@ -152,7 +187,7 @@ if (denial.isEmpty()) {
 | `getRealmInfo(UUID ownerUuid)` | Public realm data by owner. |
 | `getRealmByWorldName(String worldName)` | Public realm data by world name, without requiring it to be loaded. |
 | `getRealmOwner(World world)` / `getRealmOwner(String worldName)` | Owner of the realm a world belongs to. |
-| `isRealmWorld(World world)` / `isRealmWorld(String worldName)` | Whether a world belongs to any realm. |
+| `isRealmWorld(World world)` / `isRealmWorld(String worldName)` | Whether a world belongs to any realm (overworld, nether or end). |
 | `isLoaded(UUID ownerUuid)` | Whether the realm's overworld is currently loaded in memory. |
 | `getRoleName(UUID playerUuid, UUID ownerUuid)` | The player's role inside the realm (`OWNER`, `VISITOR`, or a custom role). |
 | `isBanned(UUID playerUuid, UUID ownerUuid)` | Whether the player is banned from the realm. |
@@ -190,5 +225,9 @@ if (denial.isEmpty()) {
 
 ## Versioning
 
-This module's versioning is independent from the main plugin
-(`cubixrealms-api/pom.xml`, not the repo root) and follows SemVer.
+The API follows SemVer and is versioned on its own: the version is the Git tag of
+[CubixRealms-API](https://github.com/VictorAlonsoo/CubixRealms-API). Every public
+surface change (added/changed/removed methods, events, fields) is listed in
+[`CHANGES.md`](./CHANGES.md). An addon compiled against one API version keeps working
+with any later MINOR or PATCH version, so it does not need rebuilding for every
+CubixRealms update.
