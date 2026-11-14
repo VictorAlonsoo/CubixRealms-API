@@ -8,12 +8,26 @@ where the version is a Git tag of [CubixRealms-API](https://github.com/VictorAlo
 > repository. `changelogs/REVIEW-CURSOR.md` there records the last commit whose API
 > surface was reviewed.
 
-## Unreleased
+## 2.3.0
 
-**No changes to the public API surface.** Method signatures, events and models are
-unchanged; addons compiled against 2.2.0 keep working without recompiling.
+Additive only: addons compiled against 2.2.0 keep working without recompiling.
 
-Behaviour worth knowing:
+### Added
+
+- `CubixRealmsAPI#hasRealm(UUID ownerUuid)` — whether the player owns a realm.
+- `CubixRealmsAPI#getRealms()` — `Collection<RealmInfo>` snapshot of every realm.
+- `CubixRealmsAPI#getDimension(World world)` — `Optional<RealmDimension>` of a realm world.
+- `CubixRealmsAPI#getRealmAt(Player player)` — the realm the player is standing in.
+- `CubixRealmsAPI#isActionAllowed(Player player, RealmAction action)` — the plugin's own
+  protection decision (role flags and bypass); `true` outside realm worlds.
+- `CubixRealmsAPI#teleportToRealm(Player player, UUID ownerUuid)` — standard teleport flow.
+- `model.RealmAction` enum: `BUILD`, `INTERACT`, `CONTAINERS`, `DOORS`, `REDSTONE`, `PVP`,
+  `DAMAGE_MOBS`, `ITEM_DROP`.
+
+### Behaviour worth knowing
+
+- `RealmEnterEvent` / `RealmLeaveEvent` now also fire when a player goes straight from one
+  realm to another owner's realm (it used to count as a dimension change).
 
 - `RealmDeleteEvent` still fires before a deletion is queued, and cancelling it
   still stops the deletion. The world folders are now deleted off the main thread,

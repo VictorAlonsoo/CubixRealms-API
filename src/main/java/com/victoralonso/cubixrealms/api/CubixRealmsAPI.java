@@ -1,5 +1,7 @@
 package com.victoralonso.cubixrealms.api;
 
+import com.victoralonso.cubixrealms.api.model.RealmAction;
+import com.victoralonso.cubixrealms.api.model.RealmDimension;
 import com.victoralonso.cubixrealms.api.model.RealmInfo;
 import com.victoralonso.cubixrealms.api.model.RealmMemberInfo;
 import com.victoralonso.cubixrealms.api.model.VisitDenialReason;
@@ -7,6 +9,7 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -139,6 +142,64 @@ public interface CubixRealmsAPI {
      * @since 1.1.0
      */
     CompletableFuture<Boolean> loadRealmAsync(UUID ownerUuid);
+
+    // -------------------------------------------------------------------------
+    // Lookups (work without the world being loaded)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns true if the player owns a realm.
+     *
+     * @since 2.3.0
+     */
+    boolean hasRealm(UUID ownerUuid);
+
+    /**
+     * Returns every realm on the server, loaded or not. The collection is a snapshot.
+     *
+     * @since 2.3.0
+     */
+    Collection<RealmInfo> getRealms();
+
+    /**
+     * Returns which dimension of a realm this world is, or empty if it is not a realm world.
+     *
+     * @since 2.3.0
+     */
+    Optional<RealmDimension> getDimension(World world);
+
+    /**
+     * Returns the realm the player is standing in (any of its dimensions), or empty if
+     * the player is outside every realm.
+     *
+     * @since 2.3.0
+     */
+    Optional<RealmInfo> getRealmAt(Player player);
+
+    // -------------------------------------------------------------------------
+    // Protection and teleport
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns whether the player may perform the action where they stand, using the same
+     * decision CubixRealms applies to its own protection: role flags of the realm, and the
+     * bypass permissions. Always true outside realm worlds.
+     *
+     * <p>Use it so your plugin (shops, pets, custom blocks) respects realm roles.
+     * Main thread only.
+     *
+     * @since 2.3.0
+     */
+    boolean isActionAllowed(Player player, RealmAction action);
+
+    /**
+     * Sends the player to the realm of {@code ownerUuid} through the standard flow: access
+     * check, world load, safe spot, and the usual messages to the player when it is denied
+     * or fails. Main thread only.
+     *
+     * @since 2.3.0
+     */
+    void teleportToRealm(Player player, UUID ownerUuid);
 
     // -------------------------------------------------------------------------
     // Singleton access

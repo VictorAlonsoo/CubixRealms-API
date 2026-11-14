@@ -48,7 +48,7 @@ The version is a Git tag of that repository; each release of the API is listed i
     <dependency>
         <groupId>com.github.VictorAlonsoo</groupId>
         <artifactId>CubixRealms-API</artifactId>
-        <version>2.2.0</version>
+        <version>2.3.0</version>
         <scope>provided</scope>
     </dependency>
 </dependencies>
@@ -62,7 +62,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.github.VictorAlonsoo:CubixRealms-API:2.2.0")
+    compileOnly("com.github.VictorAlonsoo:CubixRealms-API:2.3.0")
 }
 ```
 
@@ -178,6 +178,24 @@ if (denial.isEmpty()) {
 }
 ```
 
+### Respecting realm roles from your plugin (2.3.0+)
+
+```java
+// e.g. before letting a player place your custom block or open your shop chest
+if (!CubixRealmsAPI.get().isActionAllowed(player, RealmAction.BUILD)) {
+    event.setCancelled(true);
+}
+```
+
+Always `true` outside realm worlds, so no extra world check is needed.
+
+### Sending a player to a realm (2.3.0+)
+
+```java
+// Access check, world load, safe spot and messages are handled by CubixRealms.
+CubixRealmsAPI.get().teleportToRealm(player, ownerUuid);
+```
+
 ## Quick reference
 
 ### `CubixRealmsAPI`
@@ -195,6 +213,12 @@ if (denial.isEmpty()) {
 | `checkVisit(UUID ownerUuid, Player visitor)` | Runs the full access pipeline (bypass, ban, visitor rule, offline owner) and returns the denial reason if any. |
 | `getVisitDenialMessage(VisitDenialReason reason, UUID ownerUuid)` | Official, already-translated denial message. |
 | `loadRealmAsync(UUID ownerUuid)` | Loads the realm's worlds if not already loaded; resolves on the main thread. |
+| `hasRealm(UUID ownerUuid)` | Whether the player owns a realm. *(2.3.0)* |
+| `getRealms()` | Snapshot of every realm, loaded or not. *(2.3.0)* |
+| `getDimension(World world)` | Which realm dimension a world is, or empty if it is not a realm world. *(2.3.0)* |
+| `getRealmAt(Player player)` | The realm the player is standing in, in any dimension. *(2.3.0)* |
+| `isActionAllowed(Player player, RealmAction action)` | Whether the player's role allows the action where they stand; `true` outside realms. *(2.3.0)* |
+| `teleportToRealm(Player player, UUID ownerUuid)` | Standard teleport flow with access check and player messages. *(2.3.0)* |
 
 ### Models
 
@@ -203,6 +227,7 @@ if (denial.isEmpty()) {
 | `RealmInfo` | Immutable realm snapshot: owner, name, worlds (overworld/nether/end), visitor rule, whether it's loaded. |
 | `RealmMemberInfo` | Snapshot of a member: UUID, role, join date. |
 | `RealmDimension` | `OVERWORLD`, `NETHER`, `END`. |
+| `RealmAction` | `BUILD`, `INTERACT`, `CONTAINERS`, `DOORS`, `REDSTONE`, `PVP`, `DAMAGE_MOBS`, `ITEM_DROP` — one per role flag. *(2.3.0)* |
 | `VisitDenialReason` | `REALM_NOT_FOUND`, `BANNED`, `MEMBERS_ONLY`, `FRIENDS_ONLY`, `PRIVATE`, `OWNER_OFFLINE`. |
 
 ### Events (`org.bukkit.event.Event`, package `api.event`)
